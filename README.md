@@ -1,4 +1,4 @@
 # BullsAndCowsSolver
 
 Just exploring this problem...
-Will probably pretty stupid
+Will probably be pretty stupid
