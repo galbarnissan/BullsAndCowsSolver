@@ -4,15 +4,16 @@ from random import randint
 from copy import deepcopy
 
 SECRET_LENGTH = 4
-ps = [p for p in permutations([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], SECRET_LENGTH)]
+ps = list(permutations([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], SECRET_LENGTH))
 def random_code():
     return ps[randint(0, len(ps)-1)]
 
 class Coder:
 
-    def __init__(self, secret):
+    def __init__(self, secret, manual):
         self.secret = secret
         self.tries = 0
+        self.manual = manual
 
     def check(self, guess):
         self.tries += 1
@@ -34,7 +35,8 @@ class Coder:
                     guesses[self.secret[i]].pop()
                 else:
                     secrets[self.secret[i]].append(1)
-        print("Try: %s, bulls: %s, cows: %s" % (self.tries, bulls, cows))
+        if self.manual:
+            print("Try: %s, bulls: %s, cows: %s" % (self.tries, bulls, cows))
         return {
             "bs": bulls,
             "cs": cows
@@ -121,14 +123,12 @@ class Solver(object):
         prev_bulls = prev_score["bs"]
         prev_cows = prev_score["cs"]
         initial_guess = prev_score.get("initial_guess", False)
-        if not initial_guess:
-            if score["bs"] == 4:
-                return "solved"
-            elif bulls < prev_bulls:
-                return "bad_move"
-            elif bulls == prev_bulls and cows <= prev_cows:
-                return "bad_move"
-        return "continue"
+        if bulls == 4:
+            return "solved"
+        elif initial_guess or bulls > prev_bulls or (bulls == prev_bulls and cows > prev_cows):
+            return "continue"
+        else:        
+            return "bad_move"
 
     def rec_solve(self, prev_guess, prev_score):
         if prev_score:
@@ -154,15 +154,32 @@ class Solver(object):
         return False
 
     def solve(self):
-        self.rec_solve(random_code(), None)
+        initial_guess = [0, 1, 2, 3] # random_code()
+        #print("Initial guess: %s" % ("".join([str(i) for i in initial_guess])))
+        self.rec_solve(initial_guess, None)
         return self.solution
 
 if __name__ == "__main__":
-    code = random_code()
-    print("Code: %s" % ("".join([str(i) for i in code])))
-    coder = Coder(code)    
-    solver = Solver(coder)
-    solution = solver.solve()
-    print("Solution; code: %s, tries: %s" % (("".join([str(i) for i in code])), coder.tries))
+    manual = False
+    if manual: 
+        code = random_code()
+        coder = Coder(code, manual)    
+        print("Code: %s" % ("".join([str(i) for i in code])))
+        solver = Solver(coder)
+        solver.solve()
+        print("Solution; code: %s, tries: %s" % (("".join([str(i) for i in code])), coder.tries))
+    else:
+        codes = 0 
+        tries = 0 
+        for code in ps:
+            codes += 1
+            print("Starting code: %s" % str(codes))
+            coder = Coder(code, manual)
+            solver = Solver(coder)
+            solver.solve()
+            tries += coder.tries 
+        print("Avg: %s" % (str(tries/codes)))
+
+
 
 
